@@ -81,7 +81,7 @@
     <div class="view active" id="view-home"><div class="stack">
       <div class="composecard">
         <div class="hint" id="composehint">What's on your mind?</div>
-        <nostr-composer placeholder="What's on your mind?" button-label="Post"></nostr-composer>
+        <nostr-composer placeholder="What's on your mind?" button-label="Post" hidden></nostr-composer>
       </div>
       <div class="quiet" id="home-empty" hidden></div>
       <nostr-feed id="home-feed" limit="25"></nostr-feed>
@@ -171,6 +171,16 @@
     history.pushState({}, '', '#tag/' + e.detail.tag); route('tag/' + e.detail.tag)
   })
   if (location.hash) route(location.hash.slice(1))
+
+  // facebook pattern: pill expands into the composer
+  const hint = $('composehint')
+  const composer = document.querySelector('nostr-composer')
+  hint.onclick = () => {
+    hint.hidden = true
+    composer.hidden = false
+    composer.shadowRoot?.getElementById('text')?.focus()
+  }
+  window.addEventListener('nostr:published', () => { hint.hidden = false; composer.hidden = true })
 
   // top search routes into the search view
   $('topsearch').onchange = () => {
