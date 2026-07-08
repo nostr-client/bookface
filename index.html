@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%231877f2'/><text x='38' y='78' font-size='64' font-family='sans-serif' font-weight='bold' fill='white'>b</text></svg>">
+<meta property="og:title" content="bookface">
+<meta property="og:description" content="A facebook-flavored nostr client. One buildless HTML file.">
+<meta property="og:url" content="https://nostr-client.github.io/bookface/">
+<meta property="og:image" content="https://nostr-client.github.io/bookface/og.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="nostr-client">
+<meta name="twitter:card" content="summary_large_image">
+<title>bookface</title>
+<link rel="stylesheet" href="https://nostr-client.github.io/theme/theme.css">
+<style>
+  :root {
+    --nc-bg: #f0f2f5; --nc-surface: #ffffff; --nc-inset: #f0f2f5;
+    --nc-ink: #050505; --nc-soft: #65676b; --nc-faint: #8a8d91;
+    --nc-line: #e4e6eb; --nc-accent: #1877f2; --nc-accent-ink: #fff;
+    --nc-accent-soft: #e7f3ff; --nc-radius: 8px; --nc-radius-sm: 6px;
+    --nc-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+  }
+  body { margin: 0; }
+  header.top { position: sticky; top: 0; z-index: 10; display: flex; align-items: center;
+    gap: .8rem; padding: .5rem 1rem; background: var(--nc-surface);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 10%); }
+  .fb { width: 40px; height: 40px; border-radius: 50%; background: var(--nc-accent);
+    color: #fff; font-weight: 800; font-size: 1.6rem; display: grid; place-items: center;
+    text-decoration: none; padding-bottom: .2rem; }
+  .searchwrap { flex: 1; max-width: 16rem; }
+  .searchwrap input { font: inherit; width: 100%; box-sizing: border-box;
+    background: var(--nc-inset); border: none; border-radius: 999px; padding: .55em 1em;
+    color: var(--nc-ink); }
+  header.top .spacer { flex: 1; }
+  .app { display: grid; grid-template-columns: 18rem minmax(0, 34rem) 18rem;
+    gap: 1.5rem; justify-content: center; padding: 1.2rem 1rem; }
+  .menu { position: sticky; top: 4.4rem; display: grid; gap: .15rem; align-self: start; }
+  .menu button { font: inherit; font-size: .95rem; font-weight: 600; display: flex;
+    gap: .8rem; align-items: center; padding: .65rem .8rem; border: none;
+    background: none; color: var(--nc-ink); border-radius: 8px; cursor: pointer; text-align: left; }
+  .menu button:hover { background: rgb(0 0 0 / 5%); }
+  .menu button.active { background: var(--nc-accent-soft); color: var(--nc-accent); }
+  .menu .ico { width: 1.5em; text-align: center; font-size: 1.15em; }
+  main { min-width: 0; }
+  .view { display: none; } .view.active { display: block; }
+  .stack > * + * { margin-top: 1rem; }
+  .composecard { background: var(--nc-surface); border-radius: 8px;
+    box-shadow: var(--nc-shadow); padding: .9rem 1rem; }
+  .composecard .hint { color: var(--nc-soft); background: var(--nc-inset);
+    border-radius: 999px; padding: .6em 1em; margin-bottom: .6rem; }
+  .quiet { color: var(--nc-soft); padding: 2rem 0; text-align: center; }
+  .back { font: inherit; font-weight: 600; cursor: pointer; border: none; background: none;
+    color: var(--nc-accent); padding: 0 0 .8rem; }
+  .rightcol { position: sticky; top: 4.4rem; align-self: start; }
+  .rightcol h3 { font-size: .95rem; color: var(--nc-soft); margin: 0 0 .5rem; }
+  .foot { font-size: .75rem; color: var(--nc-faint); margin-top: 1rem; }
+  .foot a { color: inherit; }
+  @media (max-width: 1050px) { .app { grid-template-columns: 18rem minmax(0, 34rem); } .rightcol { display: none; } }
+  @media (max-width: 760px) { .app { grid-template-columns: 1fr; } .leftcol { display: none; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="fb" href="https://github.com/nostr-client/bookface">b</a>
+  <div class="searchwrap"><input id="topsearch" placeholder="Search nostr" type="search"></div>
+  <span class="spacer"></span>
+  <nostr-login></nostr-login>
+</header>
+
+<div class="app">
+  <div class="leftcol"><div class="menu" id="menu">
+    <button data-view="home" class="active"><span class="ico">🏠</span>Home</button>
+    <button data-view="friends"><span class="ico">👥</span>Friends</button>
+    <button data-view="notifications"><span class="ico">🔔</span>Notifications</button>
+    <button data-view="me"><span class="ico">🙂</span>Profile</button>
+    <button data-view="search"><span class="ico">🔎</span>Search</button>
+  </div></div>
+
+  <main>
+    <div class="view active" id="view-home"><div class="stack">
+      <div class="composecard">
+        <div class="hint" id="composehint">What's on your mind?</div>
+        <nostr-composer placeholder="What's on your mind?"></nostr-composer>
+      </div>
+      <div class="quiet" id="home-empty" hidden></div>
+      <nostr-feed id="home-feed" limit="25"></nostr-feed>
+    </div></div>
+    <div class="view" id="view-friends"><div class="stack">
+      <div class="composecard"><h3 style="margin:.2rem 0">Friends</h3><nostr-contacts></nostr-contacts></div>
+    </div></div>
+    <div class="view" id="view-notifications"><nostr-notifications></nostr-notifications></div>
+    <div class="view" id="view-search"><nostr-search id="searchbox"></nostr-search></div>
+    <div class="view" id="view-me"><div class="stack" id="me-pad"><div class="quiet">Log in to see your profile.</div></div></div>
+    <div class="view" id="view-thread">
+      <button class="back" id="back">← Back</button>
+      <nostr-thread id="thread"></nostr-thread>
+    </div>
+    <div class="view" id="view-person"><div class="stack">
+      <button class="back" id="back2">← Back</button>
+      <nostr-profile id="person-card"></nostr-profile>
+      <nostr-feed id="person-feed" limit="20" authors="none"></nostr-feed>
+    </div></div>
+    <div class="view" id="view-tag"><nostr-feed id="tag-feed" limit="25" hashtag="nostr"></nostr-feed></div>
+  </main>
+
+  <div class="rightcol">
+    <h3>Your friends</h3>
+    <nostr-contacts></nostr-contacts>
+    <div class="foot">bookface is nostr in a facebook costume — same parts as
+      <a href="https://nostr-client.github.io/birdsite/">birdsite</a>,
+      <a href="https://nostr-client.github.io/skyline/">skyline</a> &amp;
+      <a href="https://nostr-client.github.io/dittly/">dittly</a>. ·
+      <a href="https://nostr-client.github.io/">nostr-client</a> · AGPL</div>
+  </div>
+</div>
+
+<script type="module">
+  {
+    const { Pool } = await import('https://nostr-client.github.io/pool/pool.js')
+    const { withVerify } = await import('https://nostr-client.github.io/verify/verify.js')
+    const { withCache } = await import('https://nostr-client.github.io/cache/cache.js')
+    globalThis.__nostrClientPool = withCache(withVerify(new Pool()))
+  }
+  import('https://nostr-client.github.io/reactions/reactions.js')
+  await Promise.all(['login/login.js', 'composer/composer.js', 'feed/feed.js',
+    'thread/thread.js', 'notifications/notifications.js', 'search/search.js',
+    'contacts/contacts.js', 'profile/profile.js', 'profile-editor/profile-editor.js',
+  ].map((path) => import('https://nostr-client.github.io/' + path)))
+  const { parseRefs } = await import('https://nostr-client.github.io/thread/thread.js')
+  const { defaultPool } = await import('https://nostr-client.github.io/pool/pool.js')
+
+  const $ = (id) => document.getElementById(id)
+  const HEX = /^[0-9a-f]{64}$/
+  const navs = document.querySelectorAll('#menu button')
+  let currentTab = 'home'
+
+  function show(view) {
+    for (const b of navs) b.classList.toggle('active', b.dataset.view === view)
+    for (const v of document.querySelectorAll('.view')) v.classList.toggle('active', v.id === 'view-' + view)
+    scrollTo(0, 0)
+  }
+  for (const b of navs) b.onclick = () => {
+    currentTab = b.dataset.view
+    if (location.hash) history.pushState({}, '', location.pathname)
+    show(currentTab)
+  }
+  const goBack = () => history.back()
+  $('back').onclick = goBack
+  $('back2').onclick = goBack
+  function route(hash) {
+    const [kind, value] = hash.split('/')
+    if (kind === 'note' && HEX.test(value)) { $('thread').setAttribute('event-id', value); show('thread') }
+    else if (kind === 'person' && HEX.test(value)) {
+      $('person-card').setAttribute('pubkey', value)
+      $('person-feed').setAttribute('authors', value)
+      show('person')
+    } else if (kind === 'tag' && value) { $('tag-feed').setAttribute('hashtag', value); show('tag') }
+    else show(currentTab)
+  }
+  addEventListener('popstate', () => route(location.hash.slice(1)))
+  document.addEventListener('nostr:note-click', (e) => {
+    const target = e.detail.targetId ?? parseRefs(e.detail.event).root ?? e.detail.event.id
+    history.pushState({}, '', '#note/' + target); route('note/' + target)
+  })
+  document.addEventListener('nostr:profile-click', (e) => {
+    e.preventDefault()
+    history.pushState({}, '', '#person/' + e.detail.pubkey); route('person/' + e.detail.pubkey)
+  })
+  document.addEventListener('nostr:hashtag-click', (e) => {
+    history.pushState({}, '', '#tag/' + e.detail.tag); route('tag/' + e.detail.tag)
+  })
+  if (location.hash) route(location.hash.slice(1))
+
+  // top search routes into the search view
+  $('topsearch').onchange = () => {
+    const q = $('topsearch').value.trim()
+    if (!q) return
+    currentTab = 'search'; show('search')
+    $('searchbox').search(q)
+  }
+
+  // home feed: friends-first (facebook mental model) — falls back to global
+  const homeFeed = $('home-feed'), homeEmpty = $('home-empty')
+  async function loadHome() {
+    if (window.nostrPubkey) {
+      const contacts = await defaultPool().get({ kinds: [3], authors: [window.nostrPubkey] })
+      const follows = (contacts?.tags ?? []).filter((t) => t[0] === 'p' && HEX.test(t[1] ?? '')).map((t) => t[1])
+      if (follows.length) {
+        homeFeed.setAttribute('authors', follows.slice(0, 500).join(','))
+        homeEmpty.hidden = true
+        return
+      }
+    }
+    homeFeed.removeAttribute('authors')
+    homeEmpty.textContent = window.nostrPubkey
+      ? 'Showing everyone — add friends and this becomes your feed.'
+      : 'Showing everyone — log in for your friends feed.'
+    homeEmpty.hidden = false
+  }
+  window.addEventListener('nostr:login', () => { loadHome(); refreshMe() })
+  window.addEventListener('nostr:logout', () => { loadHome(); refreshMe() })
+  window.addEventListener('nostr:contacts-changed', loadHome)
+  loadHome()
+
+  function refreshMe() {
+    const pad = $('me-pad')
+    pad.innerHTML = ''
+    if (!window.nostrPubkey) {
+      const q = document.createElement('div'); q.className = 'quiet'
+      q.textContent = 'Log in to see your profile.'; pad.append(q); return
+    }
+    const card = document.createElement('nostr-profile')
+    card.setAttribute('pubkey', window.nostrPubkey)
+    const editor = document.createElement('nostr-profile-editor')
+    pad.append(card, editor)
+  }
+  refreshMe()
+</script>
+</body>
+</html>
